@@ -4,7 +4,7 @@ Embed [AVDEB](https://avdeb.com/developers/#emdash) products in an [EmDash](http
 
 - **Three editor blocks** — type `/` in any rich-text field: **AVDEB Products**, **AVDEB Product**, **AVDEB Button**. Paste a creator, category or product link and the source is detected automatically.
 - **Four layouts** — grid, carousel (scroll-snap, keyboard + arrow buttons), list ("shop the post") and spotlight (first product featured). Single products as compact card, horizontal card or hero, with your own badge and note.
-- **Looks native on any theme** — container queries (embeds adapt to the column they sit in, not the viewport), inherit / light / dark / system themes, three card styles, accent colour, corner radius, image shape. Every selector is `:where()`-wrapped, so your CSS always wins.
+- **Looks native on any theme** — container queries (embeds adapt to the column they sit in, not the viewport), inherit / light / dark / system themes, three card styles, accent colour, corner radius, image shape. Styling selectors are `:where()`-wrapped, so your CSS always wins; a small layout guard keeps post-body styles (`.prose img`, `.entry-content a`, `article h3`) from cropping images or restyling the cards.
 - **Fast and resilient** — products are fetched server-side, cached in plugin KV per query, and the last good copy is served for a week if AVDEB is unreachable. Identical embeds on one page share a single lookup.
 - **Honest links** — referral links get `rel="sponsored"`; an optional disclosure line appears under embeds that carry a code.
 - **Private by default** — no third-party scripts, no cookies, no iframes, no tracking. The only client JS is ~40 lines for carousel arrows.
@@ -119,7 +119,9 @@ Everything is a CSS custom property on `.avdeb` (embeds) or `.avdeb-cta` (button
 .avdeb[data-theme="dark"] { --avdeb-card-bg: #111; }
 ```
 
-Also available: `--avdeb-surface`, `--avdeb-border-soft`, `--avdeb-media-bg`, `--avdeb-muted`, `--avdeb-badge-bg`, `--avdeb-badge-text`, `--avdeb-shadow-hover`, `--avdeb-pad`, `--avdeb-ratio`. BEM classes (`.avdeb-card__title`, `.avdeb-badge--sale`, …) are stable.
+Also available: `--avdeb-surface`, `--avdeb-border-soft`, `--avdeb-media-bg`, `--avdeb-muted`, `--avdeb-badge-bg`, `--avdeb-badge-text`, `--avdeb-shadow-hover`, `--avdeb-pad`, `--avdeb-ratio`, `--avdeb-title-size`, `--avdeb-title-leading`, `--avdeb-heading-size`, `--avdeb-items-margin`, `--avdeb-items-pad`, `--avdeb-link-deco`, and on buttons `--avdeb-btn-bg` / `--avdeb-btn-color`. BEM classes (`.avdeb-card__title`, `.avdeb-badge--sale`, …) are stable.
+
+Embeds sit inside your post body, where themes often style bare elements (`.prose img { margin }`, `.entry-content a { text-decoration: underline }`). Layout-critical properties — image sizing/margins/borders, title and heading size and margins, link colour/underline, list indentation — are therefore guarded with real class specificity (`.avdeb .avdeb-card …`, 0,3,x) so those rules can't crop photos or restyle cards. Change them through the custom properties above, or with a more specific selector. The embed root also carries `not-prose`, so Tailwind Typography skips it.
 
 ## How it works
 

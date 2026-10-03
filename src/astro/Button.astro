@@ -6,126 +6,149 @@ import type { ContextData } from "../payload.ts";
 import { relFor } from "../view.ts";
 
 interface Props {
-	context: ContextData | null;
-	href: string;
-	label: string;
-	variant?: ButtonVariant;
-	align?: Alignment;
-	class?: string;
+    context: ContextData | null;
+    href: string;
+    label: string;
+    variant?: ButtonVariant;
+    align?: Alignment;
+    class?: string;
 }
 
-const { context, href, label, variant = "solid", align = "start", class: className } = Astro.props;
+const {
+    context,
+    href,
+    label,
+    variant = "solid",
+    align = "start",
+    class: className,
+} = Astro.props;
 const url = avdebLink(href, context?.ref ?? "");
 const accent = context?.display.accentColor;
 const newTab = context?.display.newTab ?? false;
 ---
 
-<p class:list={["avdeb-cta", `avdeb-cta--${align}`, className]} style={accent ? `--avdeb-accent:${accent}` : undefined}>
-	{
-		url ? (
-			<a class:list={["avdeb-btn", `avdeb-btn--${variant}`]} href={url} rel={relFor(url)} target={newTab ? "_blank" : undefined}>
-				<span>{label}</span>
-				<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 8h9.5M8.5 4 12.5 8l-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
-			</a>
-		) : (
-			<span>{label}</span>
-		)
-	}
+<p
+    class:list={["avdeb-cta", `avdeb-cta--${align}`, className]}
+    style={accent ? `--avdeb-accent:${accent}` : undefined}
+>
+    {url ? (
+        <a
+            class:list={["avdeb-btn", `avdeb-btn--${variant}`]}
+            href={url}
+            rel={relFor(url)}
+            target={newTab ? "_blank" : undefined}
+        >
+            <span>{label}</span>
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+                <path
+                    d="M3 8h9.5M8.5 4 12.5 8l-4 4"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                />
+            </svg>
+        </a>
+    ) : (
+        <span>{label}</span>
+    )}
 </p>
 
 <style is:global>
-	:where(.avdeb-cta) {
-		--avdeb-accent: #3b6548;
-		--avdeb-accent-contrast: #fff;
-		display: flex;
-		margin-block: 1.75em;
-	}
+    :where(.avdeb-cta) {
+        --avdeb-accent: #3b6548;
+        --avdeb-accent-contrast: #fff;
+        display: flex;
+        margin-block: 1.75em;
+    }
 
-	:where(.avdeb-cta--center) {
-		justify-content: center;
-	}
+    :where(.avdeb-cta--center) {
+        justify-content: center;
+    }
 
-	:where(.avdeb-cta--end) {
-		justify-content: flex-end;
-	}
+    :where(.avdeb-cta--end) {
+        justify-content: flex-end;
+    }
 
-	:where(.avdeb-btn) {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.55em;
-		padding: 0.85em 1.4em;
-		border: 1.5px solid var(--avdeb-accent);
-		border-radius: 999px;
-		font: inherit;
-		font-weight: 600;
-		line-height: 1.1;
-		text-decoration: none;
-		transition:
-			transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
-			box-shadow 0.2s,
-			background-color 0.2s,
-			color 0.2s;
-	}
+    :where(.avdeb-btn) {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55em;
+        padding: 0.85em 1.4em;
+        border: 1.5px solid var(--avdeb-accent);
+        border-radius: 999px;
+        font: inherit;
+        line-height: 1.1;
+        transition:
+            transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+            box-shadow 0.2s,
+            background-color 0.2s,
+            color 0.2s;
+    }
 
-	:where(.avdeb-btn svg) {
-		flex: none;
-		transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
-	}
+    :where(.avdeb-btn svg) {
+        flex: none;
+        transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
 
-	:where(.avdeb-btn:hover) :where(svg) {
-		transform: translateX(3px);
-	}
+    :where(.avdeb-btn:hover) :where(svg) {
+        transform: translateX(3px);
+    }
 
-	:where(.avdeb-btn:dir(rtl)) :where(svg) {
-		scale: -1 1;
-	}
+    :where(.avdeb-btn:dir(rtl)) :where(svg) {
+        scale: -1 1;
+    }
 
-	:where(.avdeb-btn:focus-visible) {
-		outline: 2px solid var(--avdeb-accent);
-		outline-offset: 3px;
-	}
+    :where(.avdeb-btn:focus-visible) {
+        outline: 2px solid var(--avdeb-accent);
+        outline-offset: 3px;
+    }
 
-	:where(.avdeb-btn--solid) {
-		background: var(--avdeb-accent);
-		color: var(--avdeb-accent-contrast);
-		box-shadow: 0 10px 24px -12px var(--avdeb-accent);
-	}
+    :where(.avdeb-btn--solid) {
+        --avdeb-btn-bg: var(--avdeb-accent);
+        --avdeb-btn-color: var(--avdeb-accent-contrast);
+        box-shadow: 0 10px 24px -12px var(--avdeb-accent);
+    }
 
-	:where(.avdeb-btn--solid:hover) {
-		transform: translateY(-1px);
-		box-shadow: 0 14px 30px -12px var(--avdeb-accent);
-	}
+    :where(.avdeb-btn--solid:hover) {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 30px -12px var(--avdeb-accent);
+    }
 
-	:where(.avdeb-btn--outline) {
-		background: transparent;
-		color: var(--avdeb-accent);
-	}
+    :where(.avdeb-btn--outline:hover) {
+        --avdeb-btn-bg: var(--avdeb-accent);
+        --avdeb-btn-color: var(--avdeb-accent-contrast);
+    }
 
-	:where(.avdeb-btn--outline:hover) {
-		background: var(--avdeb-accent);
-		color: var(--avdeb-accent-contrast);
-	}
+    :where(.avdeb-btn--link) {
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+    }
 
-	:where(.avdeb-btn--link) {
-		padding: 0;
-		border: 0;
-		border-radius: 0;
-		background: none;
-		color: var(--avdeb-accent);
-	}
+    :where(.avdeb-btn--link:hover) {
+        --avdeb-link-deco: underline;
+        text-underline-offset: 0.2em;
+    }
 
-	:where(.avdeb-btn--link:hover) {
-		text-decoration: underline;
-		text-underline-offset: 0.2em;
-	}
+    /* Guard: post-body styles like `.entry-content a { color; text-decoration: underline }` would
+       otherwise recolour and underline the button. Real specificity (0,3,0); restyle via the
+       --avdeb-btn-bg / --avdeb-btn-color / --avdeb-accent custom properties. */
+    .avdeb-cta > .avdeb-btn[href] {
+        background: var(--avdeb-btn-bg, transparent);
+        color: var(--avdeb-btn-color, var(--avdeb-accent));
+        font-weight: 600;
+        text-decoration-line: var(--avdeb-link-deco, none);
+    }
 
-	@media (prefers-reduced-motion: reduce) {
-		:where(.avdeb-btn, .avdeb-btn svg) {
-			transition: none;
-		}
+    @media (prefers-reduced-motion: reduce) {
+        :where(.avdeb-btn, .avdeb-btn svg) {
+            transition: none;
+        }
 
-		:where(.avdeb-btn:hover, .avdeb-btn:hover svg) {
-			transform: none;
-		}
-	}
+        :where(.avdeb-btn:hover, .avdeb-btn:hover svg) {
+            transform: none;
+        }
+    }
 </style>

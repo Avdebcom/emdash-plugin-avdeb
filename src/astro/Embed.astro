@@ -72,6 +72,7 @@ const hasHeader = Boolean(heading || intro || allHref || isCarousel);
     <section
         class:list={[
             "avdeb",
+            "not-prose",
             `avdeb--${layout}`,
             single && `avdeb--${single.variant}`,
             `avdeb--${display.cardStyle}`,
@@ -420,6 +421,11 @@ const hasHeader = Boolean(heading || intro || allHref || isCarousel);
         --avdeb-cols: 3;
         --avdeb-radius: 16px;
         --avdeb-ratio: 1 / 1;
+        --avdeb-heading-size: clamp(1.15rem, 1rem + 0.7vw, 1.55rem);
+        --avdeb-title-size: 1rem;
+        --avdeb-title-leading: 1.35;
+        --avdeb-items-margin: 0;
+        --avdeb-items-pad: 0;
 
         container: avdeb / inline-size;
         margin-block: 2em;
@@ -550,15 +556,11 @@ const hasHeader = Boolean(heading || intro || allHref || isCarousel);
     }
 
     :where(.avdeb__heading) {
-        margin: 0;
         font-family: var(--avdeb-font-title);
-        font-size: clamp(1.15rem, 1rem + 0.7vw, 1.55rem);
-        line-height: 1.2;
         letter-spacing: -0.01em;
     }
 
     :where(.avdeb__intro) {
-        margin: 0.4rem 0 0;
         max-inline-size: 62ch;
         color: var(--avdeb-muted, currentColor);
         opacity: var(--avdeb-muted-opacity);
@@ -576,16 +578,13 @@ const hasHeader = Boolean(heading || intro || allHref || isCarousel);
         display: inline-flex;
         align-items: center;
         gap: 0.3em;
-        color: var(--avdeb-accent-text);
         font-size: 0.95em;
-        font-weight: 600;
-        text-decoration: none;
         white-space: nowrap;
+        text-underline-offset: 0.2em;
     }
 
     :where(.avdeb__all:hover) {
-        text-decoration: underline;
-        text-underline-offset: 0.2em;
+        --avdeb-link-deco: underline;
     }
 
     :where(.avdeb__all svg, .avdeb-card__cta svg, .avdeb-btn svg) {
@@ -648,17 +647,12 @@ const hasHeader = Boolean(heading || intro || allHref || isCarousel);
         display: grid;
         grid-template-columns: repeat(var(--avdeb-cols), minmax(0, 1fr));
         gap: var(--avdeb-gap);
-        margin: 0;
-        padding: 0;
-        list-style: none;
     }
 
     :where(.avdeb__item) {
         container: avdeb-item / inline-size;
         display: flex;
         min-inline-size: 0;
-        margin: 0;
-        padding: 0;
     }
 
     @container avdeb (max-width: 46rem) {
@@ -708,8 +702,8 @@ const hasHeader = Boolean(heading || intro || allHref || isCarousel);
         overscroll-behavior-x: contain;
         scroll-snap-type: x mandatory;
         scrollbar-width: none;
-        padding: 0.35rem 0.35rem 1.25rem;
-        margin: -0.35rem -0.35rem -1.25rem;
+        --avdeb-items-pad: 0.35rem 0.35rem 1.25rem;
+        --avdeb-items-margin: -0.35rem -0.35rem -1.25rem;
         scroll-padding-inline: 0.35rem;
     }
 
@@ -802,7 +796,7 @@ const hasHeader = Boolean(heading || intro || allHref || isCarousel);
         :where(.avdeb--minimal)
             :where(.avdeb-card:hover)
             :where(.avdeb-card__link) {
-            text-decoration: underline;
+            --avdeb-link-deco: underline;
             text-underline-offset: 0.2em;
         }
 
@@ -832,10 +826,6 @@ const hasHeader = Boolean(heading || intro || allHref || isCarousel);
     }
 
     :where(.avdeb-card__media img) {
-        display: block;
-        inline-size: 100%;
-        block-size: 100%;
-        object-fit: cover;
         transition: transform 0.7s var(--avdeb-ease);
     }
 
@@ -896,7 +886,6 @@ const hasHeader = Boolean(heading || intro || allHref || isCarousel);
     }
 
     :where(.avdeb-card__by) {
-        margin: 0;
         color: var(--avdeb-muted, currentColor);
         opacity: var(--avdeb-muted-opacity);
         font-size: 0.8rem;
@@ -905,20 +894,15 @@ const hasHeader = Boolean(heading || intro || allHref || isCarousel);
 
     :where(.avdeb-card__title) {
         display: -webkit-box;
-        margin: 0;
         overflow: hidden;
         font-family: var(--avdeb-font-title);
-        font-size: 1rem;
         font-weight: 600;
-        line-height: 1.35;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
         line-clamp: 2;
     }
 
     :where(.avdeb-card__link) {
-        color: inherit;
-        text-decoration: none;
         outline: none;
     }
 
@@ -937,7 +921,6 @@ const hasHeader = Boolean(heading || intro || allHref || isCarousel);
     }
 
     :where(.avdeb-card__note) {
-        margin: 0.4rem 0 0;
         padding-inline-start: 0.85rem;
         border-inline-start: 3px solid var(--avdeb-accent);
         font-size: 0.95rem;
@@ -958,7 +941,6 @@ const hasHeader = Boolean(heading || intro || allHref || isCarousel);
         display: flex;
         align-items: baseline;
         gap: 0.45em;
-        margin: 0;
         font-size: 1.02rem;
         font-weight: 700;
         font-variant-numeric: tabular-nums;
@@ -1065,8 +1047,8 @@ const hasHeader = Boolean(heading || intro || allHref || isCarousel);
     }
 
     :where(.avdeb-card--featured) :where(.avdeb-card__title) {
-        font-size: clamp(1.15rem, 0.9rem + 1.6cqi, 1.6rem);
-        line-height: 1.25;
+        --avdeb-title-size: clamp(1.15rem, 0.9rem + 1.6cqi, 1.6rem);
+        --avdeb-title-leading: 1.25;
         -webkit-line-clamp: 3;
         line-clamp: 3;
     }
@@ -1111,7 +1093,7 @@ const hasHeader = Boolean(heading || intro || allHref || isCarousel);
     }
 
     :where(.avdeb-card--hero) :where(.avdeb-card__title) {
-        font-size: clamp(1.35rem, 1rem + 2.4cqi, 2.15rem);
+        --avdeb-title-size: clamp(1.35rem, 1rem + 2.4cqi, 2.15rem);
         letter-spacing: -0.015em;
         -webkit-line-clamp: 4;
         line-clamp: 4;
@@ -1156,7 +1138,6 @@ const hasHeader = Boolean(heading || intro || allHref || isCarousel);
         display: flex;
         align-items: center;
         gap: 0.45em;
-        margin: 1.1rem 0 0;
         color: var(--avdeb-muted, currentColor);
         opacity: var(--avdeb-muted-opacity);
         font-size: 0.78rem;
@@ -1165,6 +1146,93 @@ const hasHeader = Boolean(heading || intro || allHref || isCarousel);
 
     :where(.avdeb__disclosure svg) {
         flex: none;
+    }
+
+    /* ── Guard against article / prose styles ───────────────────────────────── */
+    /* Embeds live inside post bodies, whose themes style bare elements (`.prose img { margin }`,
+       `.entry-content a { text-decoration: underline }`, `article h3 { font-size }`, global
+       `img { height: auto }`). Those beat the zero-specificity :where() rules above and break the
+       cards: cropped photos, huge underlined titles, indented grids. So these layout-critical resets
+       use real class specificity (0,3,x). Restyle them with the --avdeb-* properties (title/heading
+       size, items margin/padding, link decoration) or a selector of higher specificity. */
+    .avdeb .avdeb__items[role="list"] {
+        margin: var(--avdeb-items-margin);
+        padding: var(--avdeb-items-pad);
+        list-style: none;
+    }
+
+    .avdeb .avdeb__items .avdeb__item {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .avdeb .avdeb__items .avdeb__item::marker {
+        content: none;
+    }
+
+    .avdeb .avdeb-card .avdeb-card__media img {
+        display: block;
+        inline-size: 100%;
+        max-inline-size: none;
+        block-size: 100%;
+        max-block-size: none;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        object-fit: cover;
+    }
+
+    .avdeb .avdeb__header .avdeb__heading {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        color: inherit;
+        font-size: var(--avdeb-heading-size);
+        line-height: 1.2;
+    }
+
+    .avdeb .avdeb-card .avdeb-card__title {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        color: inherit;
+        font-size: var(--avdeb-title-size);
+        line-height: var(--avdeb-title-leading);
+    }
+
+    .avdeb .avdeb-card .avdeb-card__link,
+    .avdeb .avdeb__tools .avdeb__all {
+        background: none;
+        font-weight: inherit;
+        text-decoration-line: var(--avdeb-link-deco, none);
+    }
+
+    .avdeb .avdeb-card .avdeb-card__link {
+        color: inherit;
+    }
+
+    .avdeb .avdeb__tools .avdeb__all {
+        color: var(--avdeb-accent-text);
+        font-weight: 600;
+    }
+
+    .avdeb .avdeb-card :is(.avdeb-card__by, .avdeb-card__price) {
+        margin: 0;
+    }
+
+    .avdeb .avdeb-card .avdeb-card__note {
+        margin: 0.4rem 0 0;
+    }
+
+    .avdeb .avdeb__header .avdeb__intro {
+        margin: 0.4rem 0 0;
+    }
+
+    .avdeb > .avdeb__disclosure.avdeb__disclosure {
+        margin: 1.1rem 0 0;
     }
 
     /* ── Motion & print ─────────────────────────────────────────────────────── */

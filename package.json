@@ -1,6 +1,6 @@
 {
 	"name": "emdash-plugin-avdeb",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Embed AVDEB products in EmDash CMS — grid, carousel, list and spotlight blocks with your affiliate or creator referral link",
 	"type": "module",
 	"main": "src/index.ts",
