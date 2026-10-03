@@ -1,0 +1,1192 @@
+---
+/**
+ * Renders AVDEB products in every layout: grid, carousel, list, spotlight, and the single-product
+ * variants (card / horizontal / hero). Output is links and images; the only script is the
+ * optional carousel arrows (no network, no cookies). All styles use :where() so site CSS wins.
+ */
+import type { ProductVariant } from "../constants.ts";
+import type { EmbedData } from "../payload.ts";
+import {
+    buildCards,
+    disclosureFor,
+    effectiveColumns,
+    resolveDisplay,
+    rootStyle,
+    viewAllHref,
+    relFor,
+    type DisplayOverrides,
+} from "../view.ts";
+
+interface Props {
+    data: EmbedData;
+    overrides?: DisplayOverrides;
+    heading?: string;
+    intro?: string;
+    viewAll?: boolean;
+    /** Level of the section heading (card titles use the next level). Default 2. */
+    headingLevel?: 2 | 3 | 4 | 5;
+    /** Render one featured product instead of a collection. */
+    single?: { variant: ProductVariant; badge?: string; note?: string };
+    class?: string;
+}
+
+const {
+    data,
+    overrides = {},
+    heading = "",
+    intro = "",
+    viewAll = true,
+    headingLevel = 2,
+    single,
+    class: className,
+} = Astro.props;
+
+const display = resolveDisplay(data.display, overrides);
+const locale = Astro.currentLocale ?? "en-US";
+const cards = buildCards(
+    single ? data.products.slice(0, 1) : data.products,
+    display,
+    { locale },
+);
+const layout = single ? "single" : display.layout;
+const isCarousel = layout === "carousel";
+const columns = single ? 1 : effectiveColumns(display, cards.length);
+const allHref =
+    !single && viewAll
+        ? viewAllHref(data.query, data.products, data.ref)
+        : null;
+const disclosure = disclosureFor(display, data.ref);
+const featuredFirst = single
+    ? single.variant !== "card"
+    : layout === "spotlight";
+
+const Heading = `h${headingLevel}`;
+const CardTitle = `h${Math.min(6, headingLevel + 1)}`;
+const label = heading || (single ? cards[0]?.title : "") || "AVDEB products";
+const hasHeader = Boolean(heading || intro || allHref || isCarousel);
+---
+
+{cards.length === 0 ? (
+    <Fragment set:html="<!-- AVDEB Products: nothing to show for this embed -->" />
+) : (
+    <section
+        class:list={[
+            "avdeb",
+            `avdeb--${layout}`,
+            single && `avdeb--${single.variant}`,
+            `avdeb--${display.cardStyle}`,
+            className,
+        ]}
+        data-theme={display.theme}
+        data-avdeb-carousel={isCarousel ? "" : undefined}
+        style={rootStyle(display, columns)}
+        aria-label={label}
+    >
+        {hasHeader && (
+            <header class="avdeb__header">
+                {(heading || intro) && (
+                    <div class="avdeb__titles">
+                        {heading && (
+                            <Heading class="avdeb__heading">{heading}</Heading>
+                        )}
+                        {intro && <p class="avdeb__intro">{intro}</p>}
+                    </div>
+                )}
+                {(allHref || isCarousel) && (
+                    <div class="avdeb__tools">
+                        {allHref && (
+                            <a
+                                class="avdeb__all"
+                                href={allHref}
+                                rel={relFor(allHref)}
+                                target={display.newTab ? "_blank" : undefined}
+                            >
+                                View all
+                                <svg
+                                    viewBox="0 0 16 16"
+                                    width="16"
+                                    height="16"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        d="M6 3.5 10.5 8 6 12.5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.6"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                            </a>
+                        )}
+                        {isCarousel && (
+                            <div class="avdeb__nav">
+                                <button
+                                    type="button"
+                                    class="avdeb__navbtn"
+                                    data-avdeb-prev
+                                    aria-label="Previous products"
+                                    hidden
+                                >
+                                    <svg
+                                        viewBox="0 0 16 16"
+                                        width="16"
+                                        height="16"
+                                        aria-hidden="true"
+                                    >
+                                        <path
+                                            d="M10 3.5 5.5 8 10 12.5"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="1.6"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        />
+                                    </svg>
+                                </button>
+                                <button
+                                    type="button"
+                                    class="avdeb__navbtn"
+                                    data-avdeb-next
+                                    aria-label="Next products"
+                                    hidden
+                                >
+                                    <svg
+                                        viewBox="0 0 16 16"
+                                        width="16"
+                                        height="16"
+                                        aria-hidden="true"
+                                    >
+                                        <path
+                                            d="M6 3.5 10.5 8 6 12.5"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="1.6"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        />
+                                    </svg>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </header>
+        )}
+
+        <ul
+            class="avdeb__items"
+            role="list"
+            data-avdeb-track={isCarousel ? "" : undefined}
+            tabindex={isCarousel ? 0 : undefined}
+            aria-label={isCarousel ? `${label} — scroll for more` : undefined}
+        >
+            {cards.map((c, i) => {
+                const featured = featuredFirst && i === 0;
+                return (
+                    <li class="avdeb__item">
+                        <article
+                            class:list={[
+                                "avdeb-card",
+                                featured && "avdeb-card--featured",
+                                single?.variant === "hero" &&
+                                    "avdeb-card--hero",
+                            ]}
+                        >
+                            <div class="avdeb-card__media">
+                                {c.image ? (
+                                    <img
+                                        src={c.image}
+                                        alt={c.title}
+                                        width={c.width}
+                                        height={c.height}
+                                        loading={single ? "eager" : "lazy"}
+                                        decoding="async"
+                                    />
+                                ) : (
+                                    <svg
+                                        class="avdeb-card__placeholder"
+                                        viewBox="0 0 24 24"
+                                        width="40"
+                                        height="40"
+                                        aria-hidden="true"
+                                    >
+                                        <path
+                                            d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z M4 7.5l8 4.5 8-4.5 M12 12v9"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="1.3"
+                                            stroke-linejoin="round"
+                                        />
+                                    </svg>
+                                )}
+                                {(single?.badge || c.discount || c.isNew) && (
+                                    <div
+                                        class="avdeb-card__badges"
+                                        aria-hidden="true"
+                                    >
+                                        {single?.badge && (
+                                            <span class="avdeb-badge avdeb-badge--pick">
+                                                {single.badge}
+                                            </span>
+                                        )}
+                                        {c.discount && (
+                                            <span class="avdeb-badge avdeb-badge--sale">
+                                                −{c.discount}%
+                                            </span>
+                                        )}
+                                        {c.isNew && (
+                                            <span class="avdeb-badge">New</span>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                            <div class="avdeb-card__body">
+                                <div class="avdeb-card__main">
+                                    {c.creator && (
+                                        <p class="avdeb-card__by">
+                                            by {c.creator}
+                                        </p>
+                                    )}
+                                    <CardTitle class="avdeb-card__title">
+                                        <a
+                                            class="avdeb-card__link"
+                                            href={c.href}
+                                            rel={c.rel}
+                                            target={c.target}
+                                        >
+                                            {c.title}
+                                        </a>
+                                    </CardTitle>
+                                    {single?.note && (
+                                        <p class="avdeb-card__note">
+                                            {single.note}
+                                        </p>
+                                    )}
+                                </div>
+                                <div class="avdeb-card__footer">
+                                    {c.price && (
+                                        <p class="avdeb-card__price">
+                                            {c.compareAt && (
+                                                <del>
+                                                    <span class="avdeb-sr">
+                                                        Was{" "}
+                                                    </span>
+                                                    {c.compareAt}
+                                                </del>
+                                            )}
+                                            <span>
+                                                {c.compareAt && (
+                                                    <span class="avdeb-sr">
+                                                        now{" "}
+                                                    </span>
+                                                )}
+                                                {c.price}
+                                            </span>
+                                        </p>
+                                    )}
+                                    <span
+                                        class="avdeb-card__cta"
+                                        aria-hidden="true"
+                                    >
+                                        <span class="avdeb-card__cta-label">
+                                            {display.ctaLabel}
+                                        </span>
+                                        <svg
+                                            viewBox="0 0 16 16"
+                                            width="14"
+                                            height="14"
+                                        >
+                                            <path
+                                                d="M3 8h9.5M8.5 4 12.5 8l-4 4"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="1.6"
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                            />
+                                        </svg>
+                                    </span>
+                                </div>
+                            </div>
+                        </article>
+                    </li>
+                );
+            })}
+        </ul>
+
+        {disclosure && (
+            <p class="avdeb__disclosure">
+                <svg
+                    viewBox="0 0 16 16"
+                    width="14"
+                    height="14"
+                    aria-hidden="true"
+                >
+                    <circle
+                        cx="8"
+                        cy="8"
+                        r="6.25"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.3"
+                    />
+                    <path
+                        d="M8 7.2v4M8 4.8v.1"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                    />
+                </svg>
+                {disclosure}
+            </p>
+        )}
+    </section>
+)}
+
+<script>
+    function setup(root: HTMLElement) {
+        if (root.dataset.avdebReady) return;
+        root.dataset.avdebReady = "1";
+        const track = root.querySelector<HTMLElement>("[data-avdeb-track]");
+        const prev = root.querySelector<HTMLButtonElement>("[data-avdeb-prev]");
+        const next = root.querySelector<HTMLButtonElement>("[data-avdeb-next]");
+        if (!track || !prev || !next) return;
+
+        const rtl = getComputedStyle(track).direction === "rtl";
+        const smooth = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const update = () => {
+            const max = track.scrollWidth - track.clientWidth - 2;
+            const x = Math.abs(track.scrollLeft);
+            prev.disabled = x <= 2;
+            next.disabled = x >= max;
+            const overflow = max > 0;
+            prev.hidden = next.hidden = !overflow;
+            root.toggleAttribute("data-avdeb-overflow", overflow);
+        };
+        const go = (dir: 1 | -1) =>
+            track.scrollBy({
+                left: dir * (rtl ? -1 : 1) * track.clientWidth * 0.9,
+                behavior: smooth ? "smooth" : "auto",
+            });
+
+        prev.addEventListener("click", () => go(-1));
+        next.addEventListener("click", () => go(1));
+        track.addEventListener("scroll", update, { passive: true });
+        track.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+                e.preventDefault();
+                go((e.key === "ArrowRight") !== rtl ? 1 : -1);
+            }
+        });
+        if ("ResizeObserver" in window)
+            new ResizeObserver(update).observe(track);
+        update();
+    }
+
+    const run = () =>
+        document
+            .querySelectorAll<HTMLElement>("[data-avdeb-carousel]")
+            .forEach(setup);
+    run();
+    document.addEventListener("astro:page-load", run);
+</script>
+
+<style is:global>
+    /* ── Tokens ─────────────────────────────────────────────────────────────── */
+    :where(.avdeb) {
+        --avdeb-accent: #3b6548;
+        --avdeb-accent-contrast: #fff;
+        --avdeb-accent-text: var(--avdeb-accent);
+        --avdeb-surface: transparent;
+        --avdeb-card-bg: rgba(127, 127, 127, 0.045);
+        --avdeb-border: rgba(127, 127, 127, 0.22);
+        --avdeb-border-soft: rgba(127, 127, 127, 0.12);
+        --avdeb-media-bg: rgba(127, 127, 127, 0.08);
+        --avdeb-muted-opacity: 0.72;
+        --avdeb-badge-bg: rgba(255, 255, 255, 0.92);
+        --avdeb-badge-text: #141414;
+        --avdeb-shadow:
+            0 1px 2px rgba(15, 23, 15, 0.05),
+            0 10px 28px -14px rgba(15, 23, 15, 0.25);
+        --avdeb-shadow-hover:
+            0 2px 6px rgba(15, 23, 15, 0.06),
+            0 22px 44px -18px rgba(15, 23, 15, 0.35);
+        --avdeb-gap: 1rem;
+        --avdeb-pad: 0.9rem 1rem 1rem;
+        --avdeb-font-title: inherit;
+        --avdeb-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+        --avdeb-cols: 3;
+        --avdeb-radius: 16px;
+        --avdeb-ratio: 1 / 1;
+
+        container: avdeb / inline-size;
+        margin-block: 2em;
+        color: inherit;
+        font: inherit;
+    }
+
+    @supports (color: color-mix(in srgb, red 50%, blue)) {
+        :where(.avdeb) {
+            --avdeb-card-bg: color-mix(in srgb, currentColor 3.5%, transparent);
+            --avdeb-border: color-mix(in srgb, currentColor 16%, transparent);
+            --avdeb-border-soft: color-mix(
+                in srgb,
+                currentColor 8%,
+                transparent
+            );
+            --avdeb-media-bg: color-mix(in srgb, currentColor 6%, transparent);
+            --avdeb-muted: color-mix(in srgb, currentColor 64%, transparent);
+            --avdeb-muted-opacity: 1;
+            /* Readable on any background: pulls the accent toward the site's text colour. */
+            --avdeb-accent-text: color-mix(
+                in srgb,
+                var(--avdeb-accent) 70%,
+                currentColor
+            );
+        }
+    }
+
+    :where(.avdeb[data-theme="light"]),
+    :where(.avdeb[data-theme="auto"]) {
+        --avdeb-surface: #f4f6f3;
+        --avdeb-card-bg: #fff;
+        --avdeb-border: #dde3dc;
+        --avdeb-border-soft: #e8ece7;
+        --avdeb-media-bg: #eceee9;
+        --avdeb-muted: #5d665e;
+        --avdeb-muted-opacity: 1;
+        color: #19201a;
+    }
+
+    :where(.avdeb[data-theme="dark"]) {
+        --avdeb-surface: #0f1310;
+        --avdeb-card-bg: #181d19;
+        --avdeb-border: #2b332c;
+        --avdeb-border-soft: #232a24;
+        --avdeb-media-bg: #212822;
+        --avdeb-muted: #a3ada4;
+        --avdeb-muted-opacity: 1;
+        --avdeb-badge-bg: rgba(15, 19, 16, 0.86);
+        --avdeb-badge-text: #f2f4f2;
+        --avdeb-shadow:
+            0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 32px -16px rgba(0, 0, 0, 0.7);
+        --avdeb-shadow-hover:
+            0 2px 6px rgba(0, 0, 0, 0.45), 0 24px 48px -18px rgba(0, 0, 0, 0.85);
+        color: #eef1ee;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :where(.avdeb[data-theme="auto"]) {
+            --avdeb-surface: #0f1310;
+            --avdeb-card-bg: #181d19;
+            --avdeb-border: #2b332c;
+            --avdeb-border-soft: #232a24;
+            --avdeb-media-bg: #212822;
+            --avdeb-muted: #a3ada4;
+            --avdeb-badge-bg: rgba(15, 19, 16, 0.86);
+            --avdeb-badge-text: #f2f4f2;
+            --avdeb-shadow:
+                0 1px 2px rgba(0, 0, 0, 0.4),
+                0 14px 32px -16px rgba(0, 0, 0, 0.7);
+            --avdeb-shadow-hover:
+                0 2px 6px rgba(0, 0, 0, 0.45),
+                0 24px 48px -18px rgba(0, 0, 0, 0.85);
+            color: #eef1ee;
+        }
+    }
+
+    @supports (color: color-mix(in srgb, red 50%, blue)) {
+        :where(.avdeb[data-theme="dark"]) {
+            --avdeb-accent-text: color-mix(
+                in srgb,
+                var(--avdeb-accent) 55%,
+                #fff
+            );
+        }
+        @media (prefers-color-scheme: dark) {
+            :where(.avdeb[data-theme="auto"]) {
+                --avdeb-accent-text: color-mix(
+                    in srgb,
+                    var(--avdeb-accent) 55%,
+                    #fff
+                );
+            }
+        }
+    }
+
+    :where(
+        .avdeb[data-theme="light"],
+        .avdeb[data-theme="dark"],
+        .avdeb[data-theme="auto"]
+    ) {
+        background: var(--avdeb-surface);
+        padding: clamp(1rem, 2.5vw, 1.75rem);
+        border-radius: calc(var(--avdeb-radius) + 6px);
+    }
+
+    :where(.avdeb) :where(*, *::before, *::after) {
+        box-sizing: border-box;
+    }
+
+    :where(.avdeb-sr) {
+        position: absolute;
+        inline-size: 1px;
+        block-size: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────────────────── */
+    :where(.avdeb__header) {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 0.75rem 1.5rem;
+        margin-block-end: 1.1rem;
+    }
+
+    :where(.avdeb__heading) {
+        margin: 0;
+        font-family: var(--avdeb-font-title);
+        font-size: clamp(1.15rem, 1rem + 0.7vw, 1.55rem);
+        line-height: 1.2;
+        letter-spacing: -0.01em;
+    }
+
+    :where(.avdeb__intro) {
+        margin: 0.4rem 0 0;
+        max-inline-size: 62ch;
+        color: var(--avdeb-muted, currentColor);
+        opacity: var(--avdeb-muted-opacity);
+        line-height: 1.55;
+    }
+
+    :where(.avdeb__tools) {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-inline-start: auto;
+    }
+
+    :where(.avdeb__all) {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3em;
+        color: var(--avdeb-accent-text);
+        font-size: 0.95em;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    :where(.avdeb__all:hover) {
+        text-decoration: underline;
+        text-underline-offset: 0.2em;
+    }
+
+    :where(.avdeb__all svg, .avdeb-card__cta svg, .avdeb-btn svg) {
+        flex: none;
+        transition: transform 0.25s var(--avdeb-ease);
+    }
+
+    :where(.avdeb__all:hover svg) {
+        transform: translateX(2px);
+    }
+
+    :where(.avdeb__nav) {
+        display: flex;
+        gap: 0.4rem;
+    }
+
+    :where(.avdeb__navbtn) {
+        display: grid;
+        place-items: center;
+        inline-size: 2.4rem;
+        block-size: 2.4rem;
+        padding: 0;
+        border: 1px solid var(--avdeb-border);
+        border-radius: 999px;
+        background: var(--avdeb-card-bg);
+        color: inherit;
+        cursor: pointer;
+        transition:
+            border-color 0.2s,
+            color 0.2s,
+            opacity 0.2s,
+            transform 0.2s var(--avdeb-ease);
+    }
+
+    :where(.avdeb__navbtn:hover:not(:disabled)) {
+        border-color: var(--avdeb-accent);
+        color: var(--avdeb-accent-text);
+    }
+
+    :where(.avdeb__navbtn:active:not(:disabled)) {
+        transform: scale(0.94);
+    }
+
+    :where(.avdeb__navbtn:disabled) {
+        opacity: 0.35;
+        cursor: default;
+    }
+
+    :where(.avdeb__navbtn[hidden]) {
+        display: none;
+    }
+
+    :where(.avdeb:dir(rtl))
+        :where(.avdeb__navbtn svg, .avdeb__all svg, .avdeb-card__cta svg) {
+        scale: -1 1;
+    }
+
+    /* ── Collection layouts ─────────────────────────────────────────────────── */
+    :where(.avdeb__items) {
+        display: grid;
+        grid-template-columns: repeat(var(--avdeb-cols), minmax(0, 1fr));
+        gap: var(--avdeb-gap);
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    :where(.avdeb__item) {
+        container: avdeb-item / inline-size;
+        display: flex;
+        min-inline-size: 0;
+        margin: 0;
+        padding: 0;
+    }
+
+    @container avdeb (max-width: 46rem) {
+        :where(.avdeb--grid, .avdeb--spotlight) :where(.avdeb__items) {
+            grid-template-columns: repeat(
+                min(var(--avdeb-cols), 3),
+                minmax(0, 1fr)
+            );
+        }
+    }
+
+    @container avdeb (max-width: 34rem) {
+        :where(.avdeb--grid, .avdeb--spotlight) :where(.avdeb__items) {
+            grid-template-columns: repeat(
+                min(var(--avdeb-cols), 2),
+                minmax(0, 1fr)
+            );
+        }
+    }
+
+    @container avdeb (max-width: 19rem) {
+        :where(.avdeb--grid, .avdeb--spotlight) :where(.avdeb__items) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    @supports not (container-type: inline-size) {
+        @media (max-width: 640px) {
+            :where(.avdeb--grid, .avdeb--spotlight) :where(.avdeb__items) {
+                grid-template-columns: repeat(
+                    min(var(--avdeb-cols), 2),
+                    minmax(0, 1fr)
+                );
+            }
+        }
+    }
+
+    /* Carousel: native scroll-snap; arrows appear once the script runs and there's overflow. */
+    :where(.avdeb--carousel) :where(.avdeb__items) {
+        grid-template-columns: none;
+        grid-auto-flow: column;
+        grid-auto-columns: calc(
+            (100% - (var(--avdeb-cols) - 1) * var(--avdeb-gap)) /
+                var(--avdeb-cols)
+        );
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+        padding: 0.35rem 0.35rem 1.25rem;
+        margin: -0.35rem -0.35rem -1.25rem;
+        scroll-padding-inline: 0.35rem;
+    }
+
+    :where(.avdeb--carousel) :where(.avdeb__items)::-webkit-scrollbar {
+        display: none;
+    }
+
+    :where(.avdeb--carousel) :where(.avdeb__items:focus-visible) {
+        outline: 2px solid var(--avdeb-accent);
+        outline-offset: 2px;
+        border-radius: var(--avdeb-radius);
+    }
+
+    :where(.avdeb--carousel) :where(.avdeb__item) {
+        scroll-snap-align: start;
+    }
+
+    @container avdeb (max-width: 46rem) {
+        :where(.avdeb--carousel) :where(.avdeb__items) {
+            grid-auto-columns: calc((100% - var(--avdeb-gap)) / 2.2);
+        }
+    }
+
+    @container avdeb (max-width: 30rem) {
+        :where(.avdeb--carousel) :where(.avdeb__items) {
+            grid-auto-columns: 78%;
+        }
+    }
+
+    :where(.avdeb--list) :where(.avdeb__items) {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.75rem;
+    }
+
+    /* Spotlight
+    /* Spotlight: the first product spans the row as a featured card. */
+    :where(.avdeb--spotlight) :where(.avdeb__item:first-child) {
+        grid-column: 1 / -1;
+    }
+
+    /* Single product */
+    :where(.avdeb--single) :where(.avdeb__items) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    :where(.avdeb--card) :where(.avdeb__items) {
+        max-inline-size: 22rem;
+    }
+
+    /* ── Card ───────────────────────────────────────────────────────────────── */
+    :where(.avdeb-card) {
+        position: relative;
+        isolation: isolate;
+        display: flex;
+        flex-direction: column;
+        inline-size: 100%;
+        margin: 0;
+        background: var(--avdeb-card-bg);
+        border-radius: var(--avdeb-radius);
+        transition:
+            transform 0.35s var(--avdeb-ease),
+            box-shadow 0.35s var(--avdeb-ease),
+            border-color 0.2s;
+    }
+
+    :where(.avdeb--elevated) :where(.avdeb-card) {
+        border: 1px solid var(--avdeb-border-soft);
+        box-shadow: var(--avdeb-shadow);
+    }
+
+    :where(.avdeb--outline) :where(.avdeb-card) {
+        border: 1px solid var(--avdeb-border);
+    }
+
+    :where(.avdeb--minimal) :where(.avdeb-card) {
+        background: transparent;
+        --avdeb-pad: 0.75rem 0.15rem 0.25rem;
+    }
+
+    @media (hover: hover) {
+        :where(.avdeb--elevated) :where(.avdeb-card:hover) {
+            transform: translateY(-4px);
+            box-shadow: var(--avdeb-shadow-hover);
+        }
+
+        :where(.avdeb--outline) :where(.avdeb-card:hover) {
+            border-color: var(--avdeb-accent);
+        }
+
+        :where(.avdeb--minimal)
+            :where(.avdeb-card:hover)
+            :where(.avdeb-card__link) {
+            text-decoration: underline;
+            text-underline-offset: 0.2em;
+        }
+
+        :where(.avdeb-card:hover) :where(.avdeb-card__media img) {
+            transform: scale(1.045);
+        }
+
+        :where(.avdeb-card:hover) :where(.avdeb-card__cta svg) {
+            transform: translateX(3px);
+        }
+    }
+
+    :where(.avdeb-card__media) {
+        position: relative;
+        display: grid;
+        place-items: center;
+        aspect-ratio: var(--avdeb-ratio);
+        overflow: hidden;
+        background: var(--avdeb-media-bg);
+        border-radius: 0;
+        border-start-start-radius: calc(var(--avdeb-radius) - 1px);
+        border-start-end-radius: calc(var(--avdeb-radius) - 1px);
+    }
+
+    :where(.avdeb--minimal) :where(.avdeb-card__media) {
+        border-radius: var(--avdeb-radius);
+    }
+
+    :where(.avdeb-card__media img) {
+        display: block;
+        inline-size: 100%;
+        block-size: 100%;
+        object-fit: cover;
+        transition: transform 0.7s var(--avdeb-ease);
+    }
+
+    :where(.avdeb-card__placeholder) {
+        opacity: 0.35;
+    }
+
+    :where(.avdeb-card__badges) {
+        position: absolute;
+        inset-block-start: 0.65rem;
+        inset-inline-start: 0.65rem;
+        z-index: 2;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        pointer-events: none;
+    }
+
+    :where(.avdeb-badge) {
+        padding: 0.38em 0.65em;
+        border-radius: 999px;
+        background: var(--avdeb-badge-bg);
+        color: var(--avdeb-badge-text);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        line-height: 1;
+        text-transform: uppercase;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+    }
+
+    :where(.avdeb-badge--sale) {
+        background: var(--avdeb-accent);
+        color: var(--avdeb-accent-contrast);
+    }
+
+    :where(.avdeb-badge--pick) {
+        background: #141414;
+        color: #fff;
+    }
+
+    :where(.avdeb-card__body) {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 0.7rem;
+        min-inline-size: 0;
+        padding: var(--avdeb-pad);
+    }
+
+    :where(.avdeb-card__main) {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        min-inline-size: 0;
+    }
+
+    :where(.avdeb-card__by) {
+        margin: 0;
+        color: var(--avdeb-muted, currentColor);
+        opacity: var(--avdeb-muted-opacity);
+        font-size: 0.8rem;
+        letter-spacing: 0.01em;
+    }
+
+    :where(.avdeb-card__title) {
+        display: -webkit-box;
+        margin: 0;
+        overflow: hidden;
+        font-family: var(--avdeb-font-title);
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.35;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+    }
+
+    :where(.avdeb-card__link) {
+        color: inherit;
+        text-decoration: none;
+        outline: none;
+    }
+
+    /* The title link covers the whole card: one tab stop, a meaningful link name. */
+    :where(.avdeb-card__link)::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        border-radius: var(--avdeb-radius);
+    }
+
+    :where(.avdeb-card__link:focus-visible)::after {
+        outline: 2px solid var(--avdeb-accent);
+        outline-offset: 3px;
+    }
+
+    :where(.avdeb-card__note) {
+        margin: 0.4rem 0 0;
+        padding-inline-start: 0.85rem;
+        border-inline-start: 3px solid var(--avdeb-accent);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        white-space: pre-line;
+    }
+
+    :where(.avdeb-card__footer) {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem 0.75rem;
+        margin-block-start: auto;
+    }
+
+    :where(.avdeb-card__price) {
+        display: flex;
+        align-items: baseline;
+        gap: 0.45em;
+        margin: 0;
+        font-size: 1.02rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+    :where(.avdeb-card__price del) {
+        color: var(--avdeb-muted, currentColor);
+        opacity: var(--avdeb-muted-opacity);
+        font-size: 0.85em;
+        font-weight: 500;
+        text-decoration-thickness: 1px;
+    }
+
+    :where(.avdeb-card__cta) {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35em;
+        color: var(--avdeb-accent-text);
+        font-size: 0.875rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    /* ── List layout: compact "shop the post" rows (after the base card rules) ── */
+    :where(.avdeb--list) :where(.avdeb-card) {
+        flex-direction: row;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.7rem;
+    }
+
+    :where(.avdeb--list) :where(.avdeb-card__media) {
+        flex: 0 0 clamp(4.25rem, 16cqi, 6.5rem);
+        border-radius: calc(var(--avdeb-radius) - 4px);
+    }
+
+    :where(.avdeb--list) :where(.avdeb-card__body) {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem 1rem;
+        padding: 0;
+    }
+
+    :where(.avdeb--list) :where(.avdeb-card__main) {
+        flex: 1 1 12rem;
+    }
+
+    :where(.avdeb--list) :where(.avdeb-card__footer) {
+        flex: 0 1 auto;
+        max-inline-size: 100%;
+        margin-block-start: 0;
+        gap: 0.4rem 1rem;
+    }
+
+    :where(.avdeb--list) :where(.avdeb-card__badges) {
+        inset-block-start: 0.35rem;
+        inset-inline-start: 0.35rem;
+    }
+
+    :where(.avdeb--list) :where(.avdeb-badge) {
+        font-size: 0.6rem;
+    }
+
+    @media (hover: hover) {
+        :where(.avdeb--list.avdeb--elevated) :where(.avdeb-card:hover) {
+            transform: translateY(-2px);
+        }
+    }
+
+    /* ── Featured card (spotlight first item, horizontal & hero products) ──── */
+    :where(.avdeb-card--featured) {
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+        align-items: stretch;
+        min-block-size: clamp(17rem, 38cqi, 25rem);
+    }
+
+    /* The image fills its column (cover) instead of forcing a tall square. */
+    :where(.avdeb-card--featured) :where(.avdeb-card__media) {
+        aspect-ratio: auto;
+        block-size: 100%;
+        min-block-size: 14rem;
+        border-radius: 0;
+        border-start-start-radius: calc(var(--avdeb-radius) - 1px);
+        border-end-start-radius: calc(var(--avdeb-radius) - 1px);
+    }
+
+    :where(.avdeb--minimal)
+        :where(.avdeb-card--featured)
+        :where(.avdeb-card__media) {
+        border-radius: var(--avdeb-radius);
+    }
+
+    :where(.avdeb-card--featured) :where(.avdeb-card__media img) {
+        position: absolute;
+        inset: 0;
+    }
+
+    :where(.avdeb-card--featured) :where(.avdeb-card__body) {
+        justify-content: center;
+        gap: 1.1rem;
+        padding: clamp(1.1rem, 3cqi, 2rem);
+    }
+
+    :where(.avdeb-card--featured) :where(.avdeb-card__title) {
+        font-size: clamp(1.15rem, 0.9rem + 1.6cqi, 1.6rem);
+        line-height: 1.25;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+    }
+
+    :where(.avdeb-card--featured) :where(.avdeb-card__footer) {
+        margin-block-start: 0;
+    }
+
+    :where(.avdeb-card--featured, .avdeb--list .avdeb-card)
+        :where(.avdeb-card__cta) {
+        padding: 0.7em 1.15em;
+        border-radius: 999px;
+        background: var(--avdeb-accent);
+        color: var(--avdeb-accent-contrast);
+        box-shadow: 0 8px 20px -10px var(--avdeb-accent);
+    }
+
+    :where(.avdeb--list .avdeb-card) :where(.avdeb-card__cta) {
+        padding: 0.55em 0.95em;
+        font-size: 0.82rem;
+        box-shadow: none;
+    }
+
+    /* Tight list rows: the CTA becomes a round arrow button (the whole row is the link). */
+    @container avdeb (max-width: 30rem) {
+        :where(.avdeb--list) :where(.avdeb-card__cta-label) {
+            display: none;
+        }
+
+        :where(.avdeb--list .avdeb-card) :where(.avdeb-card__cta) {
+            display: grid;
+            place-items: center;
+            inline-size: 2.1rem;
+            block-size: 2.1rem;
+            padding: 0;
+        }
+    }
+
+    :where(.avdeb-card--hero) {
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+        min-block-size: clamp(20rem, 48cqi, 32rem);
+    }
+
+    :where(.avdeb-card--hero) :where(.avdeb-card__title) {
+        font-size: clamp(1.35rem, 1rem + 2.4cqi, 2.15rem);
+        letter-spacing: -0.015em;
+        -webkit-line-clamp: 4;
+        line-clamp: 4;
+    }
+
+    :where(.avdeb-card--hero) :where(.avdeb-card__price) {
+        font-size: 1.25rem;
+    }
+
+    :where(.avdeb--minimal) :where(.avdeb-card--featured) {
+        gap: 1.25rem;
+    }
+
+    @container avdeb (max-width: 34rem) {
+        :where(.avdeb-card--featured, .avdeb-card--hero) {
+            grid-template-columns: minmax(0, 1fr);
+            min-block-size: 0;
+        }
+
+        :where(.avdeb-card--featured) :where(.avdeb-card__media) {
+            aspect-ratio: var(--avdeb-ratio);
+            block-size: auto;
+            min-block-size: 0;
+            border-radius: 0;
+            border-start-start-radius: calc(var(--avdeb-radius) - 1px);
+            border-start-end-radius: calc(var(--avdeb-radius) - 1px);
+        }
+    }
+
+    /* ── Disclosure ─────────────────────────────────────────────────────────── */
+    /* Narrow cards (e.g. 4 columns): stack price and CTA so every card lines up. */
+    @container avdeb-item (max-width: 17rem) {
+        :where(.avdeb-card:not(.avdeb-card--featured))
+            :where(.avdeb-card__footer) {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.4rem;
+        }
+    }
+
+    :where(.avdeb__disclosure) {
+        display: flex;
+        align-items: center;
+        gap: 0.45em;
+        margin: 1.1rem 0 0;
+        color: var(--avdeb-muted, currentColor);
+        opacity: var(--avdeb-muted-opacity);
+        font-size: 0.78rem;
+        line-height: 1.4;
+    }
+
+    :where(.avdeb__disclosure svg) {
+        flex: none;
+    }
+
+    /* ── Motion & print ─────────────────────────────────────────────────────── */
+    @media (prefers-reduced-motion: reduce) {
+        :where(.avdeb) :where(*) {
+            transition: none !important;
+        }
+
+        :where(.avdeb-card:hover),
+        :where(.avdeb-card:hover) :where(img) {
+            transform: none !important;
+        }
+    }
+
+    @media print {
+        :where(.avdeb__nav) {
+            display: none;
+        }
+
+        :where(.avdeb-card) {
+            box-shadow: none;
+            break-inside: avoid;
+        }
+    }
+</style>

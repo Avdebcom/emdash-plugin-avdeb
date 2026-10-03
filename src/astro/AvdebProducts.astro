@@ -1,0 +1,68 @@
+---
+/**
+ * Products in an Astro template.
+ *
+ * @example <AvdebProducts creator="cleo" layout="carousel" limit={8} heading="From my shop" />
+ * @example <AvdebProducts url="https://avdeb.com/category/stickers/" columns={4} />
+ */
+import { parseAvdebLink } from "../catalog.ts";
+import type { CardStyle, Layout, Theme } from "../constants.ts";
+import Embed from "./Embed.astro";
+import { loadEmbed } from "./load.ts";
+
+interface Props {
+	/** Any AVDEB creator, category or product link (source detected automatically). */
+	url?: string;
+	creator?: string;
+	tag?: string;
+	type?: string;
+	q?: string;
+	limit?: number;
+	layout?: Layout;
+	columns?: number;
+	cardStyle?: CardStyle;
+	theme?: Theme;
+	heading?: string;
+	intro?: string;
+	headingLevel?: 2 | 3 | 4 | 5;
+	viewAll?: boolean;
+	ctaLabel?: string;
+	hidePrice?: boolean;
+	hideCreator?: boolean;
+	class?: string;
+}
+
+const p = Astro.props;
+const link = parseAvdebLink(p.url);
+const query: Record<string, unknown> = {
+	creator: p.creator,
+	tag: p.tag,
+	type: p.type,
+	q: p.q,
+	limit: p.limit,
+	...(link ? { [link.kind]: link.value } : {}),
+};
+const data = await loadEmbed(Astro.locals, Astro.url, query);
+---
+
+{
+	data && (
+		<Embed
+			data={data}
+			overrides={{
+				layout: p.layout,
+				columns: p.columns,
+				cardStyle: p.cardStyle,
+				theme: p.theme,
+				ctaLabel: p.ctaLabel,
+				hidePrice: p.hidePrice,
+				hideCreator: p.hideCreator,
+			}}
+			heading={p.heading}
+			intro={p.intro}
+			headingLevel={p.headingLevel}
+			viewAll={p.viewAll ?? true}
+			class={p.class}
+		/>
+	)
+}

@@ -1,0 +1,49 @@
+---
+/**
+ * One featured product in an Astro template.
+ *
+ * @example <AvdebProduct handle="cat-sticker" variant="hero" badge="Editor's pick" note="I use it daily." />
+ */
+import { productRequest } from "../blocks.ts";
+import type { CardStyle, ProductVariant, Theme } from "../constants.ts";
+import Embed from "./Embed.astro";
+import { loadEmbed } from "./load.ts";
+
+interface Props {
+	/** Product handle, or a full https://avdeb.com/store/{handle}/ link. */
+	handle: string;
+	variant?: ProductVariant;
+	badge?: string;
+	note?: string;
+	ctaLabel?: string;
+	cardStyle?: CardStyle;
+	theme?: Theme;
+	hidePrice?: boolean;
+	hideCreator?: boolean;
+	headingLevel?: 2 | 3 | 4 | 5;
+	class?: string;
+}
+
+const p = Astro.props;
+const req = productRequest({ id: p.handle, variant: p.variant, badge: p.badge, note: p.note });
+const data = req.handle ? await loadEmbed(Astro.locals, Astro.url, { handle: req.handle }) : null;
+---
+
+{
+	data && (
+		<Embed
+			data={data}
+			overrides={{
+				cardStyle: p.cardStyle,
+				theme: p.theme,
+				ctaLabel: p.ctaLabel,
+				hidePrice: p.hidePrice,
+				hideCreator: p.hideCreator,
+			}}
+			viewAll={false}
+			headingLevel={p.headingLevel}
+			single={{ variant: req.variant, badge: req.badge, note: req.note }}
+			class={p.class}
+		/>
+	)
+}

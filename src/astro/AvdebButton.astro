@@ -1,0 +1,24 @@
+---
+/**
+ * A referral CTA to any AVDEB page in an Astro template.
+ *
+ * @example <AvdebButton href="/creators/cleo/" label="Visit my shop" variant="outline" align="center" />
+ */
+import type { Alignment, ButtonVariant } from "../constants.ts";
+import Button from "./Button.astro";
+import { loadContext } from "./load.ts";
+
+interface Props {
+	/** avdeb.com URL or a path such as "/store/cat-sticker/". Other hosts render as plain text. */
+	href: string;
+	label?: string;
+	variant?: ButtonVariant;
+	align?: Alignment;
+	class?: string;
+}
+
+const { href, label = "Shop on AVDEB", variant, align, class: className } = Astro.props;
+const context = await loadContext(Astro.locals, Astro.url);
+---
+
+<Button context={context} href={href} label={label} variant={variant} align={align} class={className} />

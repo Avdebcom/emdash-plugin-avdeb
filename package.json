@@ -1,0 +1,56 @@
+{
+	"name": "emdash-plugin-avdeb",
+	"version": "0.1.0",
+	"description": "Embed AVDEB products in EmDash CMS — grid, carousel, list and spotlight blocks with your affiliate or creator referral link",
+	"type": "module",
+	"main": "src/index.ts",
+	"exports": {
+		".": "./src/index.ts",
+		"./astro": "./src/astro/index.ts",
+		"./ui": "./src/ui.ts"
+	},
+	"files": [
+		"src",
+		"README.md",
+		"CHANGELOG.md",
+		"LICENSE"
+	],
+	"keywords": [
+		"emdash",
+		"emdash-plugin",
+		"cms",
+		"astro",
+		"portable-text",
+		"affiliate",
+		"product-embed",
+		"avdeb"
+	],
+	"homepage": "https://avdeb.com/developers/#emdash",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Avdebcom/emdash-plugin-avdeb.git"
+	},
+	"bugs": {
+		"url": "https://github.com/Avdebcom/emdash-plugin-avdeb/issues"
+	},
+	"author": {
+		"name": "AVDEB",
+		"url": "https://avdeb.com/developers/"
+	},
+	"license": "MIT",
+	"sideEffects": false,
+	"peerDependencies": {
+		"astro": ">=6.0.0",
+		"emdash": ">=1.1.0"
+	},
+	"devDependencies": {
+		"@types/node": "^22.18.0",
+		"astro": "^6.0.0",
+		"emdash": "^1.1.0",
+		"typescript": "^5.9.0"
+	},
+	"scripts": {
+		"test": "node --test \"tests/**/*.test.ts\"",
+		"typecheck": "tsc --noEmit"
+	}
+}

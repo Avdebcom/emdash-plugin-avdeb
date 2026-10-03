@@ -1,0 +1,15 @@
+---
+/** Portable Text renderer for `avdeb-button` blocks. */
+import { buttonRequest } from "../blocks.ts";
+import Button from "./Button.astro";
+import { loadContext } from "./load.ts";
+
+interface Props {
+	node: Record<string, unknown>;
+}
+
+const req = buttonRequest(Astro.props.node ?? {});
+const context = await loadContext(Astro.locals, Astro.url);
+---
+
+<Button context={context} href={req.href} label={req.label} variant={req.variant} align={req.align} />

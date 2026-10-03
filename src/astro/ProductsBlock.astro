@@ -1,0 +1,15 @@
+---
+/** Portable Text renderer for `avdeb-products` blocks. */
+import { productsRequest } from "../blocks.ts";
+import Embed from "./Embed.astro";
+import { loadEmbed } from "./load.ts";
+
+interface Props {
+	node: Record<string, unknown>;
+}
+
+const req = productsRequest(Astro.props.node ?? {});
+const data = await loadEmbed(Astro.locals, Astro.url, req.query);
+---
+
+{data && <Embed data={data} overrides={req.overrides} heading={req.heading} intro={req.intro} viewAll={req.viewAll} />}
